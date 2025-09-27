@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   dataflow-api:
-    build:
-      context: .
-      dockerfile: Containerfile.api
+    image: localhost/dataflow-api:latest
     container_name: dataflow-api
     ports:
       - "8000:8000"
@@ -17,6 +15,7 @@ services:
       - DATAFLOW_UI_PORT=8501
       - DATAFLOW_UI_URL=http://dataflow-ui:8501
       - SPARK_APP_NAME=DataFlow-Podman
+      - DATAFLOW_DATASET_STORAGE_PATH=/app/data/datasets
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
@@ -31,9 +30,7 @@ services:
       start_period: 40s
 
   dataflow-ui:
-    build:
-      context: .
-      dockerfile: Containerfile.ui
+    image: localhost/dataflow-ui:latest
     container_name: dataflow-ui
     ports:
       - "8501:8501"

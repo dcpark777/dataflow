@@ -130,6 +130,52 @@ def datasets_page():
     with tab2:
         st.subheader("Create New Dataset")
         
+        # Initialize fields
+        if "fields" not in st.session_state:
+            st.session_state.fields = [{"name": "", "type": "string", "nullable": True, "description": ""}]
+        
+        # Field management buttons (outside form)
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("➕ Add Field"):
+                st.session_state.fields.append({"name": "", "type": "string", "nullable": True, "description": ""})
+                st.rerun()
+        
+        with col2:
+            if st.button("🗑️ Remove Last Field") and len(st.session_state.fields) > 1:
+                st.session_state.fields.pop()
+                st.rerun()
+        
+        # Fields display
+        st.subheader("Fields Definition")
+        for i, field in enumerate(st.session_state.fields):
+            col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 2, 0.5])
+            
+            with col1:
+                field_name = st.text_input(f"Field Name {i+1}", value=field["name"], key=f"field_name_{i}")
+            with col2:
+                field_type = st.selectbox(f"Type {i+1}", ["string", "integer", "double", "boolean", "date", "timestamp"], 
+                                       index=["string", "integer", "double", "boolean", "date", "timestamp"].index(field["type"]),
+                                       key=f"field_type_{i}")
+            with col3:
+                field_nullable = st.checkbox(f"Nullable {i+1}", value=field["nullable"], key=f"field_nullable_{i}")
+            with col4:
+                field_description = st.text_input(f"Description {i+1}", value=field["description"], key=f"field_desc_{i}")
+            with col5:
+                # Only show delete button if there's more than one field
+                if len(st.session_state.fields) > 1:
+                    if st.button("🗑️", key=f"delete_field_{i}", help="Delete this field"):
+                        st.session_state.fields.pop(i)
+                        st.rerun()
+            
+            st.session_state.fields[i] = {
+                "name": field_name,
+                "type": field_type,
+                "nullable": field_nullable,
+                "description": field_description
+            }
+        
+        # Dataset creation form
         with st.form("create_dataset_form"):
             col1, col2 = st.columns(2)
             
@@ -141,45 +187,6 @@ def datasets_page():
             with col2:
                 tags_input = st.text_input("Tags (comma-separated)", placeholder="e.g., sales, customers, contacts")
                 tags = [tag.strip() for tag in tags_input.split(",") if tag.strip()]
-            
-            st.subheader("Fields Definition")
-            
-            # Dynamic fields
-            if "fields" not in st.session_state:
-                st.session_state.fields = [{"name": "", "type": "string", "nullable": True, "description": ""}]
-            
-            for i, field in enumerate(st.session_state.fields):
-                col1, col2, col3, col4 = st.columns([2, 1, 1, 2])
-                
-                with col1:
-                    field_name = st.text_input(f"Field Name {i+1}", value=field["name"], key=f"field_name_{i}")
-                with col2:
-                    field_type = st.selectbox(f"Type {i+1}", ["string", "integer", "double", "boolean", "date", "timestamp"], 
-                                           index=["string", "integer", "double", "boolean", "date", "timestamp"].index(field["type"]),
-                                           key=f"field_type_{i}")
-                with col3:
-                    field_nullable = st.checkbox(f"Nullable {i+1}", value=field["nullable"], key=f"field_nullable_{i}")
-                with col4:
-                    field_description = st.text_input(f"Description {i+1}", value=field["description"], key=f"field_desc_{i}")
-                
-                st.session_state.fields[i] = {
-                    "name": field_name,
-                    "type": field_type,
-                    "nullable": field_nullable,
-                    "description": field_description
-                }
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.form_submit_button("Add Field"):
-                    st.session_state.fields.append({"name": "", "type": "string", "nullable": True, "description": ""})
-                    st.rerun()
-            
-            with col2:
-                if st.form_submit_button("Remove Last Field"):
-                    if len(st.session_state.fields) > 1:
-                        st.session_state.fields.pop()
-                        st.rerun()
             
             # Submit form
             if st.form_submit_button("Create Dataset", type="primary"):

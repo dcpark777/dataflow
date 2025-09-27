@@ -4,6 +4,8 @@ REST API endpoints for DataFlow dataset management and transformations
 
 import os
 import json
+import sys
+import logging
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 from pathlib import Path
@@ -12,6 +14,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from contextlib import asynccontextmanager
 from pyspark.sql import SparkSession
 
 from .dataset import DatasetDefinition, DatasetRegistry, create_sample_datasets
@@ -55,22 +58,6 @@ class DataUploadRequest(BaseModel):
     data: List[Dict[str, Any]]
 
 
-# Initialize FastAPI app
-app = FastAPI(
-    title="DataFlow API",
-    description="REST API for DataFlow dataset management and transformations",
-    version="0.1.0"
-)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Global instances
 dataset_registry: Optional[DatasetRegistry] = None
 transformation_engine: Optional[TransformationEngine] = None
@@ -78,10 +65,13 @@ spark_session: Optional[SparkSession] = None
 config = get_config()
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize services on startup"""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize services on startup and cleanup on shutdown"""
     global dataset_registry, transformation_engine, spark_session
+    
+    print("=== STARTUP EVENT TRIGGERED ===")
+    sys.stdout.flush()
     
     # Initialize Spark session with configuration
     spark_builder = SparkSession.builder.appName(config.spark_app_name)
@@ -93,26 +83,53 @@ async def startup_event():
     
     spark_session = spark_builder.getOrCreate()
     
-    # Initialize dataset registry
-    dataset_registry = DatasetRegistry()
+    # Initialize dataset registry with persistent storage
+    logger.info(f"Initializing dataset registry with storage path: {config.dataset_storage_path}")
+    dataset_registry = DatasetRegistry(storage_path=config.dataset_storage_path)
     
-    # Add sample datasets
-    sample_datasets = create_sample_datasets()
-    for dataset in sample_datasets:
-        dataset_registry.add_dataset(dataset)
+    # Add sample datasets only if registry is empty (first time setup)
+    existing_datasets = dataset_registry.list_datasets()
+    logger.info(f"Existing datasets: {existing_datasets}")
+    if not existing_datasets:
+        sample_datasets = create_sample_datasets()
+        for dataset in sample_datasets:
+            dataset_registry.add_dataset(dataset)
+        logger.info("Sample datasets created for first-time setup")
+    else:
+        logger.info(f"Found {len(existing_datasets)} existing datasets, skipping sample creation")
     
     # Initialize transformation engine
     transformation_engine = TransformationEngine(spark_session, dataset_registry)
     
     print("DataFlow API started successfully!")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    global spark_session
+    
+    yield
+    
+    # Cleanup on shutdown
     if spark_session:
         spark_session.stop()
+
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="DataFlow API",
+    description="REST API for DataFlow dataset management and transformations",
+    version="0.1.0",
+    lifespan=lifespan
+)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Dataset Management Endpoints

@@ -3,6 +3,7 @@ Dataset definition and management module for DataFlow
 """
 
 import json
+import sys
 import yaml
 from dataclasses import dataclass, asdict, field
 from typing import Dict, List, Any, Optional, Union, Type
@@ -135,9 +136,17 @@ class DatasetRegistry:
     
     def add_dataset(self, dataset: DatasetDefinition) -> None:
         """Add a dataset definition to the registry"""
+        print(f"Adding dataset '{dataset.name}' to registry")
+        print(f"Storage path: {self.storage_path}")
+        sys.stdout.flush()
         self.datasets[dataset.name] = dataset
         if self.storage_path:
+            print(f"Saving dataset '{dataset.name}' to storage at {self.storage_path}")
+            sys.stdout.flush()
             self.save_to_storage()
+        else:
+            print("No storage path set, dataset not persisted")
+            sys.stdout.flush()
     
     def get_dataset(self, name: str) -> Optional[DatasetDefinition]:
         """Get a dataset definition by name"""
@@ -162,16 +171,28 @@ class DatasetRegistry:
     
     def save_to_storage(self) -> None:
         """Save all datasets to storage"""
+        print(f"save_to_storage called. Storage path: {self.storage_path}")
+        sys.stdout.flush()
         if not self.storage_path:
+            print("No storage path set, skipping save")
+            sys.stdout.flush()
             return
         
+        print(f"Creating directory: {self.storage_path}")
+        sys.stdout.flush()
         self.storage_path.mkdir(parents=True, exist_ok=True)
         
+        print(f"Saving {len(self.datasets)} datasets to storage")
+        sys.stdout.flush()
         # Save each dataset as a separate JSON file
         for name, dataset in self.datasets.items():
             file_path = self.storage_path / f"{name}.json"
+            print(f"Saving dataset '{name}' to {file_path}")
+            sys.stdout.flush()
             with open(file_path, 'w') as f:
                 f.write(dataset.to_json())
+            print(f"Dataset '{name}' saved successfully")
+            sys.stdout.flush()
     
     def load_from_storage(self) -> None:
         """Load datasets from storage"""

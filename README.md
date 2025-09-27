@@ -125,6 +125,26 @@ dataflow/
 └── Taskfile.yml        # Task runner commands
 ```
 
+## 💾 Dataset Storage
+
+When you create datasets in the UI, they are stored persistently in the `./data/datasets/` directory on your host machine. This directory is mounted into the container, so your datasets will persist even when containers are restarted.
+
+### Storage Structure
+
+```
+data/
+├── datasets/           # Dataset definitions (JSON files)
+├── exports/            # Exported datasets
+└── imports/            # Imported datasets
+```
+
+### Dataset Persistence
+
+- ✅ **Datasets persist** across container restarts
+- ✅ **Automatic saving** when datasets are created/modified
+- ✅ **JSON format** for easy backup and version control
+- ✅ **Host-mounted** storage for easy access
+
 ## 🛡️ Podman Features
 
 - ✅ **Java 21 included** - No need to install Java separately

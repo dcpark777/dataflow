@@ -19,6 +19,8 @@ WORKDIR /app
 # Copy project files
 COPY pyproject.toml uv.lock LICENSE README.md ./
 COPY dataflow/ ./dataflow/
+# Force rebuild by adding timestamp
+RUN echo "Build timestamp: $(date)" > /tmp/build_info
 # Create empty .env file if it doesn't exist
 RUN touch .env
 
