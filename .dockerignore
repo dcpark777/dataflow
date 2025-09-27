@@ -75,7 +75,6 @@ logs/
 # Data files (will be mounted as volumes)
 data/
 dataflow_datasets/
-exported_datasets.json
 
 # Temporary files
 *.tmp
@@ -83,14 +82,13 @@ exported_datasets.json
 .tmp/
 .temp/
 
-# Docker files (don't copy into containers)
-Dockerfile*
-docker-compose*.yml
+# Container files (don't copy into containers)
+Containerfile*
+compose.yml
 .dockerignore
 
 # Task files
 Taskfile.yml
-dataflow.sh
 
-# Java setup
-java_setup.py
+# Environment files
+env.example
