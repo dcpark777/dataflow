@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  dataflow-api:
+    build:
+      context: .
+      dockerfile: Containerfile.api
+    container_name: dataflow-api
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DATAFLOW_API_HOST=0.0.0.0
+      - DATAFLOW_API_PORT=8000
+      - DATAFLOW_API_URL=http://dataflow-api:8000
+      - DATAFLOW_UI_HOST=0.0.0.0
+      - DATAFLOW_UI_PORT=8501
+      - DATAFLOW_UI_URL=http://dataflow-ui:8501
+      - SPARK_APP_NAME=DataFlow-Podman
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    networks:
+      - dataflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  dataflow-ui:
+    build:
+      context: .
+      dockerfile: Containerfile.ui
+    container_name: dataflow-ui
+    ports:
+      - "8501:8501"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DATAFLOW_API_HOST=dataflow-api
+      - DATAFLOW_API_PORT=8000
+      - DATAFLOW_API_URL=http://dataflow-api:8000
+      - DATAFLOW_UI_HOST=0.0.0.0
+      - DATAFLOW_UI_PORT=8501
+      - DATAFLOW_UI_URL=http://localhost:8501
+      - SPARK_APP_NAME=DataFlow-Podman-UI
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    networks:
+      - dataflow-network
+    depends_on:
+      dataflow-api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  dataflow-network:
+    driver: bridge
+
+volumes:
+  dataflow-data:
+  dataflow-logs:

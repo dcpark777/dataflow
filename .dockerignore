@@ -1,0 +1,96 @@
+# Docker ignore file
+# Exclude files that shouldn't be copied into Docker images
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+# README.md - needed for package build
+# *.md - needed for package build
+docs/
+
+# Development files
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Logs
+*.log
+logs/
+
+# Data files (will be mounted as volumes)
+data/
+dataflow_datasets/
+exported_datasets.json
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Docker files (don't copy into containers)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Task files
+Taskfile.yml
+dataflow.sh
+
+# Java setup
+java_setup.py
